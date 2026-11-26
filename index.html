@@ -1,0 +1,74 @@
+ 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SNS横断検索</title>
+<style>
+body {
+  font-family: sans-serif;
+  background: #101827;
+  color: white;
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+input, select, button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 15px;
+  margin: 8px 0;
+  border-radius: 10px;
+  font-size: 17px;
+}
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+<h1>SNS横断検索</h1>
+<input id="name" placeholder="公開クリエイター名を入力">
+<select id="site">
+<option value="all">全サイト</option>
+<option value="instagram.com">Instagram</option>
+<option value="facebook.com">Facebook</option>
+<option value="x.com">X</option>
+<option value="tiktok.com">TikTok</option>
+<option value="youtube.com">YouTube</option>
+<option value="vimeo.com">Vimeo</option>
+<option value="dailymotion.com">Dailymotion</option>
+<option value="pinterest.com">Pinterest</option>
+<option value="nicovideo.jp">ニコニコ</option>
+</select>
+<button onclick="search('')">一括検索</button>
+<button onclick="search('isch')">写真検索</button>
+<button onclick="search('vid')">動画検索</button>
+<script>
+function search(mode) {
+  const name = document.getElementById('name').value.trim();
+  const site = document.getElementById('site').value;
+  if (!name) {
+    alert('名前を入力してください');
+    return;
+  }
+  const domains = [
+    'instagram.com','facebook.com','x.com',
+    'tiktok.com','youtube.com','vimeo.com',
+    'dailymotion.com','pinterest.com','nicovideo.jp'
+  ];
+  const filter = site === 'all'
+    ? '(' + domains.map(d => 'site:' + d).join(' OR ') + ')'
+    : 'site:' + site;
+  const url = 'https://www.google.com/search?q='
+    + encodeURIComponent(name + ' ' + filter)
+    + (mode ? '&tbm=' + mode : '');
+  window.location.href = url;
+}
+</script>
+</body>
+</html>
