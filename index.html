@@ -40,6 +40,36 @@ button {
 label {
   font-size: 15px;
 }
+details {
+  background: #202020;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+.site-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid #444;
+  padding: 8px 0;
+}
+.site-row span {
+  overflow-wrap: anywhere;
+}
+.delete {
+  background: #a83232;
+  width: auto;
+  padding: 8px 12px;
+  margin: 0;
+}
+.add {
+  background: #16834a;
+}
 </style>
 </head>
 <body>
@@ -53,24 +83,138 @@ label {
 <input id="keyword" placeholder="検索したいキーワードを入力">
 
 <label for="site">検索対象サイト</label>
-<select id="site">
-<option value="all">全サイト</option>
-<option value="instagram.com">Instagram</option>
-<option value="facebook.com">Facebook</option>
-<option value="x.com">X</option>
-<option value="tiktok.com">TikTok</option>
-<option value="youtube.com">YouTube</option>
-<option value="vimeo.com">Vimeo</option>
-<option value="dailymotion.com">Dailymotion</option>
-<option value="pinterest.com">Pinterest</option>
-<option value="nicovideo.jp">ニコニコ動画</option>
-</select>
+<select id="site"></select>
 
 <button onclick="search('all')">一括検索</button>
 <button onclick="search('image')">写真検索</button>
 <button onclick="search('video')">動画検索</button>
 
+<details>
+<summary>⚙ 検索サイトの追加・削除</summary>
+
+<div id="siteList"></div>
+
+<br>
+
+<label for="newSite">追加したいサイトのURL</label>
+<input id="newSite" placeholder="https://example.com">
+
+<button class="add" onclick="addSite()">＋ サイトを追加</button>
+
+<button onclick="resetSites()">初期設定に戻す</button>
+</details>
+
 <script>
+const defaults = [
+  'instagram.com',
+  'facebook.com',
+  'x.com',
+  'tiktok.com',
+  'youtube.com',
+  'vimeo.com',
+  'dailymotion.com',
+  'pinterest.com',
+  'nicovideo.jp'
+];
+
+let sites = [...defaults];
+
+try {
+  const saved = JSON.parse(localStorage.getItem('snsSites'));
+  if (Array.isArray(saved)) {
+    sites = saved;
+  }
+} catch (e) {}
+
+function saveSites() {
+  try {
+    localStorage.setItem('snsSites', JSON.stringify(sites));
+  } catch (e) {
+    alert('サイトの自動保存ができませんでした');
+  }
+  renderSites();
+}
+
+function renderSites() {
+  const select = document.getElementById('site');
+  const list = document.getElementById('siteList');
+  const previous = select.value;
+
+  select.replaceChildren();
+  list.replaceChildren();
+
+  select.add(new Option('全サイト', 'all'));
+
+  sites.forEach((site, index) => {
+    select.add(new Option(site, site));
+
+    const row = document.createElement('div');
+    row.className = 'site-row';
+
+    const label = document.createElement('span');
+    label.textContent = site;
+
+    const button = document.createElement('button');
+    button.textContent = '削除';
+    button.className = 'delete';
+    button.onclick = () => deleteSite(index);
+
+    row.append(label, button);
+    list.appendChild(row);
+  });
+
+  select.value = sites.includes(previous) ? previous : 'all';
+}
+
+function addSite() {
+  const input = document.getElementById('newSite');
+  let value = input.value.trim();
+
+  if (!value) {
+    alert('サイトのURLを入力してください');
+    return;
+  }
+
+  try {
+    if (!/^https?:\/\//i.test(value)) {
+      value = 'https://' + value;
+    }
+
+    const parsed = new URL(value);
+    value = parsed.hostname.toLowerCase().replace(/^www\./, '');
+
+    if (!/^[a-z0-9.-]+\.[a-z0-9-]+$/.test(value)) {
+      throw new Error('invalid');
+    }
+  } catch (e) {
+    alert('正しいサイトのURLを入力してください');
+    return;
+  }
+
+  if (sites.includes(value)) {
+    alert('すでに登録されています');
+    return;
+  }
+
+  sites.push(value);
+  saveSites();
+  input.value = '';
+}
+
+function deleteSite(index) {
+  if (confirm(sites[index] + ' を削除しますか？')) {
+    sites.splice(index, 1);
+    saveSites();
+  }
+}
+
+function resetSites() {
+  if (confirm('最初の9サイトに戻しますか？')) {
+    sites = [...defaults];
+    saveSites();
+  }
+}
+
 function search(type) {
   const name = document.getElementById('name').value.trim();
   const keyword = document.getElementById('keyword').value.trim();
@@ -81,19 +225,12 @@ function search(type) {
     return;
   }
 
-  const sites = [
-    'instagram.com',
-    'facebook.com',
-    'x.com',
-    'tiktok.com',
-    'youtube.com',
-    'vimeo.com',
-    'dailymotion.com',
-    'pinterest.com',
-    'nicovideo.jp'
-  ];
+  if (sites.length === 0) {
+    alert('検索サイトを追加してください');
+    return;
+  }
 
-  let query = '"' + name + '"';
+  let query = '"' + name.replace(/"/g, '') + '"';
 
   if (keyword) {
     query += ' ' + keyword;
@@ -111,10 +248,11 @@ function search(type) {
   if (type === 'image') url += '&tbm=isch';
   if (type === 'video') url += '&tbm=vid';
 
-window.location.href = url + '&tbs=li:1';
+  window.location.href = url + '&tbs=li:1';
 }
+
+renderSites();
 </script>
 
 </body>
 </html>
-
