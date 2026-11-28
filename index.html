@@ -254,5 +254,43 @@ function search(type) {
 renderSites();
 </script>
 
+<script>
+const panel = document.createElement('div');
+panel.innerHTML = `
+<button id="backup">登録サイトをバックアップ</button>
+<button id="restore">登録サイトを復元</button>
+<textarea id="backupText" style="width:100%;box-sizing:border-box;min-height:100px" placeholder="バックアップデータ"></textarea>
+<p id="saveStatus"></p>`;
+document.querySelector('details').appendChild(panel);
+
+document.getElementById('backup').onclick = () => {
+  document.getElementById('backupText').value = JSON.stringify(sites);
+};
+
+document.getElementById('restore').onclick = () => {
+  try {
+    const data = JSON.parse(document.getElementById('backupText').value);
+    if (!Array.isArray(data) || !data.every(s =>
+      typeof s === 'string' && /^[a-z0-9.-]+\.[a-z0-9-]+$/.test(s)
+    )) throw new Error();
+    if (!confirm('登録サイトを復元しますか？')) return;
+    sites = [...new Set(data)];
+    saveSites();
+  } catch {
+    alert('バックアップデータが正しくありません');
+  }
+};
+
+saveSites = function() {
+  try {
+    localStorage.setItem('snsSites', JSON.stringify(sites));
+    document.getElementById('saveStatus').textContent = '保存完了';
+  } catch {
+    document.getElementById('saveStatus').textContent = '保存失敗';
+  }
+  renderSites();
+};
+</script>
+
 </body>
 </html>
